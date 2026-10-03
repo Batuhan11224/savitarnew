@@ -75,7 +75,7 @@ def web_sohbet_yaniti(soru):
     if any(k in soru_alt for k in kimlik_tetikleyici):
         return random.choice([
             "🤖 Ben gelişmiş bir sorgu ve sanal numara botuyum! Geleceğin en güçlü botu olmaya adayım.",
-            "💻 Dijital dünyada sonsuza kadar yaşayacak bir kod parçasıyım. Yaşım yok, sınırım yok, senin için buradayım!",
+            "💻 Dijital dünyada sonsuza kadar yaşayacak bir kod parçasıyım. Yaşım yok, sınırım yok, senin için burayanayım!",
             "🤖 Ben senin sağ kolunum dostum. Telegram'ın en işlevsel botu olmak için yazıldım."
         ])
 
@@ -122,7 +122,7 @@ def web_sohbet_yaniti(soru):
         return random.choice([
             "🤖 Söylediğini web veritabanımda taradım dostum. Sohbet sınırları dahilinde anlıyorum ama tam karşılığını bulamadım. Başka bir şeyden bahsedelim mi?",
             "💬 İlginç bir yaklaşım! Bana 'nasılsın', 'sıkıldım' veya 'fıkra' gibi kelimelerle gelirsen daha derin konuşabiliriz.",
-            "🧠 Hmm, bunu bir yere not ettim. Sohbet modunda şimdilik günlük hal-hatır, dertleşme ve finans geyikleri yapabiliyoruz. İşlemler için aşağıdaki butonları kullanabilirsin!"
+            "🧠 Hmm, bunu bir yere not ettim. Sohbet modunda şimdilik günlük hal-hatır, dertleşme và finans geyikleri yapabiliyoruz. İşlemler için aşağıdaki butonları kullanabilirsin!"
         ])
 
 # --- SMR SİMÜLASYON VERİ AKIŞLARI ---
