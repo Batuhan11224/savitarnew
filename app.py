@@ -50,7 +50,8 @@ def send_welcome(message):
     if chat_id not in kullanici_bakiyesi: kullanici_bakiyesi[chat_id] = 0.0
     markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
     markup.add(types.KeyboardButton('📸 Fotoğraf Bakma'), types.KeyboardButton('🔍 Sorgulama Yap'), types.KeyboardButton('📱 Sanal No Al'), types.KeyboardButton('💬 Sohbet Et'), types.KeyboardButton('💳 Bakiye & Ödeme'), types.KeyboardButton('❓ Yardım'))
-    bot.send_message(chat_id, f"👋 Merhaba! Yapmak istediğiniz işlemi seçin:\n💰 **Mevcut Bakiyeniz:** {kullanici_bakiyesi[chat_id]} TL", reply_markup=markup, message_id=None, parse_mode="Markdown")
+    # Hatalı parametre tamamen kaldırıldı
+    bot.send_message(chat_id, f"👋 Merhaba! Yapmak istediğiniz işlemi seçin:\n💰 **Mevcut Bakiyeniz:** {kullanici_bakiyesi[chat_id]} TL", reply_markup=markup, parse_mode="Markdown")
 
 @bot.message_handler(func=lambda message: True)
 def handle_all_messages(message):
@@ -63,8 +64,6 @@ def handle_all_messages(message):
         bot.send_message(chat_id, "💬 **Sohbet Modu Aktif!** Bana normal bir insanla konuşur gibi istediğini yazabilirsin dostum.", parse_mode="Markdown")
     elif text == '📸 Fotoğraf Bakma': 
         bot.send_message(chat_id, "📸 Fotoğraf Bakma modülü yakında aktif olacaktır.")
-    
-    # 🔍 SORGULAMA YAP MENÜSÜ CANLANDIRILDI!
     elif text == '🔍 Sorgulama Yap':
         kullanici_durumu[chat_id] = "sorgu_secim"
         markup = types.InlineKeyboardMarkup(row_width=1)
@@ -75,7 +74,6 @@ def handle_all_messages(message):
             types.InlineKeyboardButton("⬅️ Ana Menüye Dön", callback_data="go_main")
         )
         bot.send_message(chat_id, "🔍 **Sorgulama Paneline Hoş Geldiniz!**\nLütfen yapmak istediğiniz sorgu türünü seçin:", reply_markup=markup, parse_mode="Markdown")
-        
     elif text == '💳 Bakiye & Ödeme': 
         bot.send_message(chat_id, f"💳 **Bakiye & Ödeme Bilgileri**\n\n**Alıcı:** {ALICI_BILGISI}\n**IBAN:** `{IBAN_BILGISI}`\n**Açıklama Kodu:** `{ACIKLAMA_KODU}`", parse_mode="Markdown")
     elif text == '❓ Yardım': 
@@ -86,7 +84,6 @@ def handle_all_messages(message):
         for n in numaralar: markup.add(types.InlineKeyboardButton(f"{n['country']} -> {n['number']}", callback_data=f"viewfree_{n['id']}"))
         bot.send_message(chat_id, "📱 Ücretsiz sanal numaralar listelendi. Gelen SMS'leri görmek için tıklayın:", reply_markup=markup)
     else:
-        # Eğer kullanıcı sorgu modundaysa ve bir metin girdiyse
         if kullanici_durumu.get(chat_id) in ["tc_bekliyor", "tel_bekliyor", "plaka_bekliyor"]:
             bot.send_message(chat_id, "⚙️ **Sorgulanıyor...** Veritabanı bağlantısı simüle ediliyor. Sonuç: *Kayıt Bulunamadı.*", parse_mode="Markdown")
             kullanici_durumu[chat_id] = None
@@ -96,8 +93,6 @@ def handle_all_messages(message):
 @bot.callback_query_handler(func=lambda call: True)
 def handle_callback_queries(call):
     chat_id = call.message.chat.id
-    
-    # Sorgu butonlarının arkasındaki işlemler
     if call.data == "sorgu_tc":
         kullanici_durumu[chat_id] = "tc_bekliyor"
         bot.edit_message_text("👤 **T.C. / İsim Sorgulama**\nLütfen sorgulamak istediğiniz kişinin T.C. numarasını veya Ad Soyad bilgisini yazıp gönderin:", chat_id, call.message.message_id, parse_mode="Markdown")
@@ -110,7 +105,6 @@ def handle_callback_queries(call):
     elif call.data == "go_main":
         kullanici_durumu[chat_id] = None
         bot.edit_message_text("⬅️ Ana menüye dönüldü. Lütfen klavyenizdeki butonları kullanın.", chat_id, call.message.message_id)
-        
     elif call.data.startswith("viewfree_"):
         num_id = call.data.split("_")[-1]
         markup = types.InlineKeyboardMarkup()
