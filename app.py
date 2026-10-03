@@ -36,7 +36,7 @@ def web_sohbet_yaniti(soru):
     if any(k in soru_alt for k in kufurler):
         return random.choice([
             "🧠 Kelime dağarcığını biraz geliştirmelisin dostum. Küfürle bir yere varamazsın.",
-            "🤖 IQ seviyemiz kapışır diyordum ama bu üslup karşısında sistemim hata verdi. Az ötede oyna.",
+            "🤖 IQ seviyeniz kapışır diyordum ama bu üslup karşısında sistemim hata verdi. Az ötede oyna.",
             "🥱 Bu yazdığın yaratıcı olmayan hakaret beni hiç etkilemedi. Git biraz Türkçe çalış da gel.",
             "🤖 Sistemimde senin için 'Gereksiz Canlı Formu' uyarısı belirdi. Terbiyeni takın dostum."
         ])
@@ -95,13 +95,13 @@ def web_sohbet_yaniti(soru):
         return random.choice([
             "😄 Temel bir gün uçağa binmiş, yanına da bir İngiliz oturmuş... Uçak kalktıktan sonra pilot anons yapmış: 'Motorlardan biri bozuldu ama korkmayın 3 motorumuz daha var.' Temel yanındakine dönmüş: 'Ula iyi ki 4 motor var, yoksa havada kalacaktık!' Nasıl, beğendin mi? 😂",
             "🤖 Bilgisayarlar neden hiç evlenmez? Çünkü sürekli 'RAM'lerinde bir sorun çıkmasından korkarlar! Nasıl espri ama? 🖥️😂",
-            "🐧 Adamın biri harıl harıl ders çalışıyormuş, arkadaşı gelip sormuş: 'Ne çalışıyorsun?' Adam: 'İktisat' demiş. Arkadaşı: 'İyi de sen mimarsın?' Adam: 'Olsun, en azından iki tık isat yaparım!' Kötüydü kabul ediyorum... 😂"
+            "🤖 Adamın biri harıl harıl ders çalışıyormuş, arkadaşı gelip sormuş: 'Ne çalışıyorsun?' Adam: 'İktisat' demiş. Arkadaşı: 'İyi de sen mimarsın?' Adam: 'Olsun, en azından iki tık isat yaparım!' Kötüydü kabul ediyorum... 😂"
         ])
 
     # ⏰ 8. ZAMAN VE SAAT (50+ Varyasyon)
     saat_tetikleyici = ["saat kaç", "saat kac", "zaman ne", "tarih", "günlerden ne"]
     if any(k in soru_alt for k in saat_tetikleyici):
-        return "⏰ Dijital dünyada zaman ışık hızında akıyor dostum! Telefonunun ekranına veya bilgisayarının sağ alt köşesine bakarak tam zamanı görebilirsin."
+        return "⏰ Dijital dünyada zaman ışık hızında akıyor dostum! Telefonunun ekranına bakarak tam zamanı görebilirsin."
 
     # 🤝 9. TEŞEKKÜR VE ÖVGÜ HAVUZU (150+ Varyasyon)
     ovgu_tetikleyici = ["teşekkür", "tesekkur", "eyvallah", "sağol", "adamsın", "cansın", "helal", "kralsın", "sagol", "harikasın", "mükemmelsin", "seviyorum", "iyi bot"]
@@ -141,7 +141,7 @@ def get_free_number_sms(number_id):
         "📩 *Son Gelen Mesajlar (Canlı Havuz):*\n\n"
         "1️⃣ *Google:* 482910 doğrulama kodunuz. - _2 dk önce_\n"
         "2️⃣ *TikTok:* Your verification code is 9931. - _5 dk önce_\n"
-        "⚠️ *Not:* Kod gelmediyse yenile butonuna basın."
+        "⚠️ *Not:* Bu numaralar halka açıktır. Kod gelmediyse yenile butonuna basın."
     )
 
 # --- TELEGRAM BOT EVENT HANDLERS (TELEGRAM BAĞLANTILARI) ---
