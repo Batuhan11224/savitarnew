@@ -4,13 +4,12 @@ import threading
 import requests
 import telebot
 from telebot import types
-from dotenv import load_dotenv  # Çevre değişkenlerini zorla yüklemek için eklendi
-import ajaxapi  # Orijinal sorgu kütüphaneniz
+from dotenv import load_dotenv  
 
-# Hem yereldeki .env dosyasını hem de Railway Variables panelini koda yükler
+# Hem yereldeki .env dosyasını hem de sunucu paneli (Railway/Render vb.) değişkenlerini yükler
 load_dotenv()
 
-# .env veya Railway panelinden token ve API anahtarlarını çekme
+# Ortam değişkenlerinden token ve API anahtarlarını çekme
 TOKEN = os.getenv("BOT_TOKEN")
 SMS_ACTIVATE_KEY = os.getenv("SMS_ACTIVATE_KEY")
 
@@ -20,77 +19,102 @@ print(f"📡 [BAŞLANGIÇ KONTROLÜ] SMS_ACTIVATE_KEY Durumu: {'✅ YÜKLENDİ' 
 print("==================================================")
 
 if not TOKEN:
-    raise RuntimeError("BOT_TOKEN ortam değişkeni tanımlı değil. Lütfen Railway paneline ekleyin.")
+    raise RuntimeError("BOT_TOKEN ortam değişkeni tanımlı değil. Lütfen panelinize ekleyin.")
 
 bot = telebot.TeleBot(TOKEN)
+
+# API isteklerinin gideceği doğru steward uç noktası
 BASE_URL = "https://sms-activate.org"
 
 # Kullanıcı durum takibi
 kullanici_durumu = {}
 
-# --- Gelişmiş Dosya İçeriği Düzenleyici (Formatlayıcı) ---
+# Orijinal sorgu kütüphaneniz
+try:
+    import ajaxapi  
+except ImportError:
+    print("⚠️ UYARI: 'ajaxapi' modülü bulunamadı! Sorgu fonksiyonları çalışmayabilir.")
+
+# --- ✨ YENİ: Gelişmiş Düzenli Rapor Formatlayıcı (Tablo Yapısı) ---
 def formatla_sonuc(veri, baslik_turu):
-    """Gelen karmaşık sözlük (dict), liste (list) veya string veriyi sıralı ve okunaklı hale getirir."""
-    metin = f"=========================================\n"
-    metin += f"📊 {baslik_turu.upper()} SORGULAMA SONUCU\n"
-    metin += f"=========================================\n\n"
+    """Gelen verileri okunaklı, hizalı ve çizgili bir tablo (Rapor) formatına getirir."""
+    if not baslik_turu:
+        baslik_turu = "DETAY"
+        
+    metin =  "╔══════════════════════════════════════════════════════════════════════════╗\n"
+    metin += f"║ 📊 {baslik_turu.upper().center(68)} ║\n"
+    metin += "╚══════════════════════════════════════════════════════════════════════════╝\n\n"
     
-    # Eğer veri bir liste ise (Örn: Aile/Sülale listesi gelmişse)
+    # --- DURUM 1: Birden Fazla Kişi/Kayıt Listesi Gelmişse (Sıralı Tablo) ---
     if isinstance(veri, list):
         for sira, eleman in enumerate(veri, 1):
-            metin += f"📌 [{sira}] KİŞİ / KAYIT BİLGİSİ:\n"
+            metin += f"◤ Kayıt No: #{sira} ───────────────────────────────────────────────────────┐\n"
             if isinstance(eleman, dict):
+                max_len = max([len(str(k)) for k in eleman.keys()]) if eleman else 10
                 for k, v in eleman.items():
                     anahtar = str(k).replace("_", " ").title()
-                    metin += f"   • {anahtar}: {v}\n"
+                    metin += f"  │  • {anahtar.ljust(max_len + 2)} : {v}\n"
             else:
-                metin += f"   • {eleman}\n"
-            metin += f"{'-'*40}\n"
+                metin += f"  │  • Bilgi: {eleman}\n"
+            metin += f"└────────────────────────────────────────────────────────────────────────┘\n\n"
             
-    # Eğer veri bir sözlük/JSON ise (Örn: Tek bir TC veya Adres sonucu gelmişse)
+    # --- DURUM 2: Tek Bir Kişiye Ait Detaylı Sözlük Verisi Gelmişse ---
     elif isinstance(veri, dict):
+        max_len = max([len(str(k)) for k in veri.keys()]) if veri else 10
+        metin += "┌── Bilgiler ─────────────────────────────────────────────────────────────┐\n"
         for k, v in veri.items():
-            # Eğer iç içe liste veya sözlük varsa
             if isinstance(v, (dict, list)):
                 anahtar = str(k).replace("_", " ").title()
-                metin += f"\n📂 {anahtar} BÖLÜMÜ:\n"
-                metin += formatla_sonuc(v, "")  # İç içe yapıyı temizle
+                metin += f"│\n├── 📂 {anahtar} Alt Bölümü ──────────────────────────────────────────\n"
+                alt_metin = formatla_sonuc(v, "ALT BÖLÜM")
+                # Alt metindeki gereksiz başlık çizgilerini kırpıp hizalı şekilde ekler
+                kırpılmıs_hatlar = [line for line in alt_metin.split("\n") if "══" not in line and "📊" not in line]
+                metin += "\n".join([f"│   {line}" for line in kırpılmıs_hatlar if line.strip()]) + "\n"
             else:
                 anahtar = str(k).replace("_", " ").title()
-                metin += f"• {anahtar}: {v}\n"
+                metin += f"│  • {anahtar.ljust(max_len + 2)} : {v}\n"
+        metin += "└─────────────────────────────────────────────────────────────────────────┘\n"
                 
-    # Eğer düz metin geldiyse ancak içinde virgüller/süslü parantezler varsa temizle
+    # --- DURUM 3: Düz Metin / Karmaşık String Yapısı Gelmişse ---
     else:
         veri_str = str(veri).strip()
-        # Basit string temizleme ve alt alta sıralama denemesi
         if "," in veri_str and ":" in veri_str:
             veri_str = veri_str.replace("{", "").replace("}", "").replace("'", "").replace('"', "")
             parcalar = veri_str.split(",")
+            metin += "┌─────────────────────────────────────────────────────────────────────────┐\n"
             for p in parcalar:
                 if ":" in p:
                     k, v = p.split(":", 1)
-                    metin += f"• {k.strip().replace('_', ' ').title()}: {v.strip()}\n"
+                    anahtar = k.strip().replace('_', ' ').title()
+                    metin += f"│  • {anahtar.ljust(20)} : {v.strip()}\n"
                 else:
-                    metin += f"• {p.strip()}\n"
+                    metin += f"│  • {p.strip()}\n"
+            metin += "└─────────────────────────────────────────────────────────────────────────┘\n"
         else:
-            metin += f"{veri_str}\n"
+            metin += f"📝 Sonuç Notu:\n{veri_str}\n"
             
-    metin += f"\n=========================================\n"
-    metin += f"Oluşturulma Tarihi: {time.strftime('%d.%m.%Y %H:%M:%S')}\n"
+    metin += f"\n👉 Raporlama Sistemi tarafından otomatik üretilmiştir.\n"
+    metin += f"🕒 Oluşturulma Tarihi: {time.strftime('%d.%m.%Y %H:%M:%S')}\n"
     return metin
 
-# SMS-Activate Yardımcı Fonksiyonları
+# SMS-Activate API Çağrı Fonksiyonu
 def sms_api_call(action, params={}):
     if not SMS_ACTIVATE_KEY:
         return "ERROR_NO_API_KEY"
-    default_params = {'api_key': SMS_ACTIVATE_KEY, 'action': action}
+    
+    default_params = {
+        'api_key': str(SMS_ACTIVATE_KEY).strip(), 
+        'action': action
+    }
     default_params.update(params)
+    
     try:
-        response = requests.get(BASE_URL, params=default_params, timeout=10)
-        return response.text
+        response = requests.get(BASE_URL, params=default_params, timeout=12)
+        return response.text.strip()
     except Exception as e:
         return f"ERROR_{str(e)}"
 
+# SMS Kod Takip Arka Plan İşlemi
 def sms_kod_takip(chat_id, activation_id):
     bot.send_message(chat_id, "⏳ Numara alındı! SMS kodu bekleniyor... (Maksimum 3 dakika)")
     for _ in range(36):
@@ -175,30 +199,3 @@ def handle_messages(message):
 
     elif text == '📞 GSM -> TC Sorgu':
         kullanici_durumu[chat_id] = text
-        bot.send_message(chat_id, "📝 Lütfen sorgulanacak **GSM Numarasını** yazın\n_(Örn: 5550000000)_:", parse_mode="Markdown")
-
-    elif text == '🗺️ Ada Parsel Sorgu':
-        kullanici_durumu[chat_id] = text
-        bot.send_message(chat_id, "📝 Lütfen İl ve İlçe bilgisini aralarında virgül bırakarak yazın\n_(Örn: İSTANBUL, KADIKÖY)_:")
-
-    else:
-        durum = kullanici_durumu.get(chat_id)
-        if durum is None:
-            bot.send_message(chat_id, "⚠️ Lütfen önce menüden bir işlem seçin veya /start yazın.")
-            return
-
-        kullanici_durumu[chat_id] = None
-        dosya_adi = None
-
-        try:
-            # Girdi doğrulamaları
-            if durum in ['🆔 TC Sorgu', '💎 TC Pro Sorgu', '👨‍👩‍👧‍👦 Aile Sorgu', '🌳 Sülale Sorgu', '📱 TC -> GSM Sorgu', '🏫 E-Okul Sorgu', '🏠 Adres Sorgu', '📜 Tapu Sorgu']:
-                if len(text.strip()) != 11 or not text.strip().isdigit():
-                    bot.send_message(chat_id, "❌ Hata: Lütfen geçerli bir **11 haneli sayısal** TC Kimlik Numarası girin.", parse_mode="Markdown")
-                    return
-            elif durum == '📞 GSM -> TC Sorgu':
-                if not text.strip().isdigit() or len(text.strip()) < 10:
-                    bot.send_message(chat_id, "❌ Hata: Lütfen geçerli bir GSM numarası girin.")
-                    return
-            elif durum == '👤 Ad Soyad Sorgu':
-                parcalar = text.strip().split(" ", 1)
