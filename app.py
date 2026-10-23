@@ -133,12 +133,46 @@ def sms_kod_takip(chat_id, activation_id):
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     kullanici_durumu[message.chat.id] = None
-    markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
-    markup.add(
-        types.KeyboardButton('📸 Fotoğraf Bakma'), types.KeyboardButton('🔍 Sorgulama Yap'),
-        types.KeyboardButton('📱 Sanal Numara Al'), types.KeyboardButton('❓ Yardım')
+    markup = types.InlineKeyboardMarkup(row_width=2)
+    markup.row(
+        types.InlineKeyboardButton(text="🔍 Aile", callback_data="sorgu_aile"),
+        types.InlineKeyboardButton(text="🔍 Sülale", callback_data="sorgu_sulale")
     )
+    markup.row(
+        types.InlineKeyboardButton(text="🦈 Premium Sorgular", callback_data="premium"),
+        types.InlineKeyboardButton(text="🔍 Diğer Araçlar", callback_data="araclar")
+    )
+    markup.add(types.InlineKeyboardButton(text="🔍 Bilgilerim", callback_data="bilgilerim"))
     bot.send_message(message.chat.id, "👋 Merhaba! Yapmak istediğiniz işlemi seçin:", reply_markup=markup)
+
+# Yeni menü butonları
+@bot.callback_query_handler(func=lambda call: call.data in {
+    "sorgu_aile", "sorgu_sulale", "premium", "araclar", "bilgilerim"
+})
+def handle_menu_callbacks(call):
+    if call.data in ("sorgu_aile", "sorgu_sulale"):
+        bot.answer_callback_query(call.id, "Bu hassas kişisel veri sorgusu etkin değil.")
+        bot.send_message(
+            call.message.chat.id,
+            "Bu buton şu anda aile/akrabalık kayıtlarını sorgulamaz. "
+            "Kişilere ait hassas kayıtları izinsiz arayan bir işlev sunulamıyor."
+        )
+    elif call.data == "premium":
+        bot.answer_callback_query(call.id)
+        bot.send_message(call.message.chat.id, "🦈 Premium özellikler şu anda yapılandırılmamış.")
+    elif call.data == "araclar":
+        bot.answer_callback_query(call.id)
+        bot.send_message(
+            call.message.chat.id,
+            "🔧 Diğer araçlar: Fotoğraf menüsü ve sanal numara özellikleri ana menü dışında "
+            "şu anda bu yeni menüye bağlanmamıştır."
+        )
+    elif call.data == "bilgilerim":
+        bot.answer_callback_query(call.id)
+        bot.send_message(
+            call.message.chat.id,
+            f"🔍 Telegram kullanıcı ID'niz: {call.from_user.id}"
+        )
 
 # 2. MESAJ VE MENÜ YÖNETİMİ
 @bot.message_handler(func=lambda message: True)
